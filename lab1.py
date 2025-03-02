@@ -5,20 +5,21 @@ def num2words(num):
 
 def transform_even_number(word):
     return ''.join([word[i+1] + word[i] for i in range(0, len(word)-1, 2)]) + (word[-1] if len(word) % 2 else '')
-k = int(input())
+k = int(input('Введите количество нулей:'))
 fl = 0
+A,B=[],[]
 with open('input.txt', 'r') as f:
     words = f.read().split()
     for word in words:
         if word.isdigit():
             num = int(word)
             if num % 2 != 0 and len(word) > 3:
-                print(num)
-    for word in words:
-        if word.isdigit() and int(word)%2==0:
+                A.append(num)
+            if int(word)%2==0:
                 transformed = transform_even_number(word)
                 if fl>0 or '0'*k in transformed:
-                    print(num2words(int(word)))
+                    B.append(num2words(int(word)))
                     fl+=1
                 if fl==0:
-                    print(transformed)
+                    B.append(transformed)
+    print(f"1-ый список: {A}\n2-ой список: {B}")
