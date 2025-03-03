@@ -2,11 +2,9 @@ import re
 K = 3
 F = 0
 digit_words = {0: 'ноль', 1: 'один', 2: 'два', 3: 'три', 4: 'четыре', 5: 'пять', 6: 'шесть', 7: 'семь', 8: 'восемь', 9: 'девять'}
-A=[]
-B=[]
+A, B=[], []
 def num2words(num):
     return ' '.join(digit_words[int(d)] for d in str(num)) if num != 0 else 'ноль'
-
 def transform_even_number(word):
     return ''.join([word[i + 1] + word[i] for i in range(0, len(word) - 1, 2)]) + (word[-1] if len(word) % 2 else '')
 def process_numbers(text, F):
