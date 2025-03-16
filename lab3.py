@@ -30,17 +30,13 @@ if count_polozh>count_otric:
     for i in range(n):
         for j in range(n):
             if i>j and j>e:
-                G = F[j][i]
-                F[j][i] = F[i][j]
-                F[i][j] = G
+                F[i][j], F[j][i] = F[j][i], F[i][j]
         e-=1
 else:
     for i in range(n):
         for j in range(n):
             if i < j and j < e:
-                G=F[i][j]
-                F[i][j]=F[x-1-j][i]
-                F[x-1-j][i]=G
+                F[i][j], F[x-1-j][i]=F[x-1-j][i], F[i][j]
         e-=1
 print("Матрица F: ",F)
 for i in range(len(AT)):
