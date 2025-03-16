@@ -1,6 +1,5 @@
 import numpy, matplotlib, random
-count_polozh, count_otric,k,n=0,0,int(input("Введите k:")), int(input("Введите n:"))
-A=numpy.eye(n)
+A, count_polozh, count_otric,k,n=numpy.eye(n),0,0,int(input("Введите k:")), int(input("Введите n:"))
 for i in range(n):
     for j in range(n):
         A[i][j]=random.randint(-10,10)
@@ -42,12 +41,11 @@ else:
             for j in range(r-1):
                 F[i][j],F[i - r][j + r] = F[i - r][j + r],F[i][j]
 print("Матрица F:", F)
-C=numpy.linalg.inv(A)
+C, G=numpy.linalg.inv(A), numpy.tril(A)
 if round(numpy.linalg.det(A))>numpy.trace(F):
     VIR = numpy.subtract(numpy.dot(A,A.T),  k * numpy.dot(F, C))
     print(f"Транспонированная матрица A:{A.T}\nМатрица, обратная A:{C}\nМатрица A, умноженная на свою транспонированную версию:{numpy.dot(A, A.T)}\nМатрица F, умноженная на матрицу, обратную A {numpy.dot(F, C)}\nМатрица k*F*invA{k*numpy.dot(F, C)}\n Результат вычислений:{VIR}")
 else:
-    G=numpy.tril(A)
     VIR = k*(numpy.subtract(numpy.add(k*C, G), F.T))
     print(f"Транспонированная матрица F:{F.T}\nНижняя треугольная матрица G:{G}\nМатрица, обратная A:{C}\nМатрица k*invA:{k*C}\nМатрица k*invA+G:{numpy.add(k*C, G)}\nМатрица k*invA+G-F.T:{numpy.subtract(numpy.add(k*C, G),F.T)}\nРезультат вычислений:{VIR}")
 
