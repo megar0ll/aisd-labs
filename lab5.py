@@ -25,8 +25,8 @@ def generate_gift_sets_pythonic(N, K):
         if len(combination) == N:
             gift_sets.append(combination)
     return gift_sets
-N = 5  # количество открыток, которые нужно купить
-K = 10  # общее количество видов открыток
+N = int(input("Введите количество открыток, которое нужно купить")
+K = int(input("Введите общее количество видов открыток")
 # Измерение времени выполнения алгоритмического варианта
 algorithmic_time = timeit.timeit(lambda: generate_gift_sets_algorithmic(N, K), number=1)
 # Измерение времени выполнения варианта с использованием функций Python
