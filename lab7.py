@@ -4,49 +4,51 @@ from itertools import combinations
 
 def generate_gift_sets_optimized(N, K):
     all_gifts = [
-        {"name": "Рождество", "color": "красный"},
+        {"name": "Шарик", "color": "красный"},
         {"name": "Новый год", "color": "синий"},
-        {"name": "Зима", "color": "белый"},
+        {"name": "Снегурочка", "color": "голубой"},
         {"name": "Санта", "color": "красный"},
-        {"name": "Снежинка", "color": "серебряный"}
+        {"name": "Снежинка", "color": "серебряный"},
+        {"name": "Рождество", "color": "белый"}
     ]
-    similar_theme = {"Рождество": ["Новый год"], "Санта": ["Зима"]}
-    gift_sets = []
-
-    for r in range(1, K + 1):
-        comb = combinations(all_gifts, r)
-        for c in comb:
-            if len(set([gift["color"] for gift in c])) == N:  # Ограничение на цвета
-                add_set = True
-                # Проверка ограничений на характеристики объектов
-                for theme, similar_themes in similar_theme.items():
-                    if theme in [gift["name"] for gift in c]:
-                        for sim_theme in similar_themes:
-                            if sim_theme in [gift["name"] for gift in c]:
-                                add_set = False
-                                break
-                        if not add_set:
-                            break
-                if add_set:
-                    gift_sets.append([gift["name"] for gift in c])
-
-    return gift_sets
-
+    # Ограничения: какие открытки нельзя комбинировать
+    restrictions = {
+        "Шарик": ["Снежинка"],
+        "Санта": ["Снегурочка"]
+    }
+    valid_sets = []
+    # Генерируем все комбинации длины N
+    for combo in combinations(all_gifts, N):
+        # Проверяем ограничение по цветам (все цвета должны быть разными)
+        colors = [gift["color"] for gift in combo]
+        if len(set(colors)) != N:
+            continue
+        # Проверяем ограничения по темам
+        valid = True
+        names = [gift["name"] for gift in combo]
+        for name in names:
+            if name in restrictions:
+                for forbidden in restrictions[name]:
+                    if forbidden in names:
+                        valid = False
+                        break
+                if not valid:
+                    break
+        if valid:
+            valid_sets.append([gift["name"] for gift in combo])
+    return valid_sets
 def target_function(gift_sets):
-    max_unique_themes = 0
-    optimal_solution = None
-
-    for gift_set in gift_sets:
-        unique_themes = len(set(gift_set))
-        if unique_themes > max_unique_themes:
-            max_unique_themes = unique_themes
-            optimal_solution = gift_set
-
-    return len(optimal_solution) if optimal_solution else 0
+    if not gift_sets:
+        return 0
+    # Находим набор с максимальным количеством уникальных тем
+    max_unique = max(len(set(gift_set)) for gift_set in gift_sets)
+    optimal_solutions = [gift_set for gift_set in gift_sets if len(set(gift_set)) == max_unique]
+    # Возвращаем количество оптимальных решений
+    return len(optimal_solutions)
 
 def generate_combinations():
     N = int(input_n.get())
-    K = int(input_k.get())
+    K = 6
 
     all_combinations = generate_gift_sets_optimized(N, K)
 
@@ -81,10 +83,8 @@ label_n.grid(row=0, column=0)
 input_n = tk.Entry()
 input_n.grid(row=0, column=1, padx=5, pady=5)
 
-label_k = tk.Label(text="Введите общее количество видов открыток (K):")
+label_k = tk.Label(text="Общее количество видов открыток (K) = 6")
 label_k.grid(row=1, column=0)
-input_k = tk.Entry()
-input_k.grid(row=1, column=1, padx=5, pady=5)
 
 # Создание кнопки
 button_generate = tk.Button(text="Сгенерировать", command=generate_combinations)
