@@ -1,115 +1,106 @@
+import itertools
 import tkinter as tk
-from tkinter import scrolledtext
-from itertools import combinations
-
-def generate_gift_sets_optimized(N, K):
-    all_gifts = [
-        {"name": "Шарик", "color": "красный"},
-        {"name": "Новый год", "color": "синий"},
-        {"name": "Снегурочка", "color": "голубой"},
-        {"name": "Санта", "color": "красный"},
-        {"name": "Снежинка", "color": "серебряный"},
-        {"name": "Рождество", "color": "белый"}
-    ]
-    # Ограничения: какие открытки нельзя комбинировать
-    restrictions = {
-        "Шарик": ["Снежинка"],
-        "Санта": ["Снегурочка"]
-    }
-    valid_sets = []
-    # Генерируем все комбинации длины N
-    for combo in combinations(all_gifts, N):
-        # Проверяем ограничение по цветам (все цвета должны быть разными)
-        colors = [gift["color"] for gift in combo]
-        if len(set(colors)) != N:
-            continue
-        # Проверяем ограничения по темам
-        valid = True
-        names = [gift["name"] for gift in combo]
-        for name in names:
-            if name in restrictions:
-                for forbidden in restrictions[name]:
-                    if forbidden in names:
-                        valid = False
-                        break
-                if not valid:
-                    break
-        if valid:
-            valid_sets.append([gift["name"] for gift in combo])
-    return valid_sets
-def target_function(gift_sets):
-    if not gift_sets:
-        return 0
-    # Находим набор с максимальным количеством уникальных тем
-    max_unique = max(len(set(gift_set)) for gift_set in gift_sets)
-    optimal_solutions = [gift_set for gift_set in gift_sets if len(set(gift_set)) == max_unique]
-    # Возвращаем количество оптимальных решений
-    return len(optimal_solutions)
-
-def generate_combinations():
-    N = int(input_n.get())
-    K = 6
-
-    all_combinations = generate_gift_sets_optimized(N, K)
-
-    # Вывод результатов
-    text_area.delete('1.0', tk.END)  # Очистка поля вывода перед вставкой нового текста
-    if not all_combinations:
-        text_area.insert(tk.END, "К сожалению, комбинаций, удовлетворяющих условиям, не существует.")
-    else:
-        for i, gift_set in enumerate(all_combinations):
-            text_area.insert(tk.END, f"{i + 1}. {' '.join(gift_set)}\n")
-
-    # Расчет и вывод оптимального решения
-    optimal_solution = target_function(all_combinations)
-    additional_info_area.delete("1.0", tk.END)
-    additional_info_area.insert(tk.END,
-                                "Оптимальное решение (количество возможных комбинатов): %s" % optimal_solution)
-
-def additional_info():
-    additional_info_text = additional_info_area.get('1.0', tk.END).strip()
-    if additional_info_text:
-        text_area.delete('1.0', tk.END)
-        text_area.insert(tk.END, additional_info_text)
-
-# Создание окна приложения
-window = tk.Tk()
-window.title("Генератор комбинаций покупки открыток")
-window.geometry("500x500")
-
-# Создание элементов ввода
-label_n = tk.Label(text="Введите количество открыток, которые нужно купить (N):")
-label_n.grid(row=0, column=0)
-input_n = tk.Entry()
-input_n.grid(row=0, column=1, padx=5, pady=5)
-
-label_k = tk.Label(text="Общее количество видов открыток (K) = 6")
-label_k.grid(row=1, column=0)
-
-# Создание кнопки
-button_generate = tk.Button(text="Сгенерировать", command=generate_combinations)
-button_generate.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
-
-
-# Создание метки после кнопки
-result_label = tk.Label(text=f"Все возможные комбинации покупки")
-result_label.grid(row=6, column=0, sticky="nsew")
-
-# Создание поля вывода с вертикальной полосой прокрутки
-text_area = scrolledtext.ScrolledText(window, wrap=tk.WORD, width=40, height=10)
-text_area.grid(row=7, column=0, columnspan=2, padx=10, pady=10)
-
-# Метка с дополнительной информацией
-additional_info_label = tk.Label(text="Оптимальное решение (количество возможных комбинаций)")
-additional_info_label.grid(row=8, column=0, sticky="nsew")
-
-# Поле ввода для дополнительной информации
-additional_info_area = scrolledtext.ScrolledText(window, wrap=tk.WORD, width=40, height=5)
-additional_info_area.grid(row=9, column=0, columnspan=2, padx=10, pady=10)
-
-# Размещение окна в центре экрана
-window.geometry(f"+{(window.winfo_screenwidth() - 200) // 2}+{(window.winfo_screenheight() - 200) // 2}")
-window.mainloop()
-
-# Запуск основного цикла приложения
-window.mainloop()
+from tkinter import scrolledtext, messagebox
+class TeamOptimizerApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Оптимизатор команды")
+        self.root.geometry("800x600")
+        # Переменные для хранения данных
+        self.candidates = {}
+        self.min_mid_avg = tk.DoubleVar(value=7.0)
+        self.min_jun_avg = tk.DoubleVar(value=5.0)
+        self.create_widgets()
+    def create_widgets(self):
+        # Фрейм для ввода данных
+        input_frame = tk.LabelFrame(self.root, text="Ввод данных", padx=10, pady=10)
+        input_frame.pack(padx=10, pady=5, fill=tk.X)
+        # Поля для ввода минимальных средних значений
+        tk.Label(input_frame, text="Минимальный средний уровень мидлов:").grid(row=0, column=0, sticky=tk.W)
+        tk.Entry(input_frame, textvariable=self.min_mid_avg, width=10).grid(row=0, column=1, sticky=tk.W)
+        tk.Label(input_frame, text="Минимальный средний уровень джунов:").grid(row=1, column=0, sticky=tk.W)
+        tk.Entry(input_frame, textvariable=self.min_jun_avg, width=10).grid(row=1, column=1, sticky=tk.W)
+        # Текстовое поле для ввода кандидатов
+        tk.Label(input_frame, text="Введите кандидатов в формате 'ID:уровень' (по одному на строку):").grid(row=2, column=0, columnspan=2, sticky=tk.W)
+        self.candidates_text = tk.Text(input_frame, height=10, width=40)
+        self.candidates_text.grid(row=3, column=0, columnspan=2, sticky=tk.W)
+        self.candidates_text.insert(tk.END, "1:8\n2:10\n3:7\n4:6\n5:9\n6:4")
+        # Кнопка для запуска оптимизации
+        tk.Button(input_frame, text="Найти оптимальную команду", command=self.optimize_team).grid(row=4, column=0, columnspan=2, pady=10)
+        # Фрейм для вывода результатов
+        output_frame = tk.LabelFrame(self.root, text="Результаты", padx=10, pady=10)
+        output_frame.pack(padx=10, pady=5, fill=tk.BOTH, expand=True)
+        # Поле с прокруткой для вывода результатов
+        self.output_area = scrolledtext.ScrolledText(output_frame, width=70, height=20)
+        self.output_area.pack(fill=tk.BOTH, expand=True)
+    def parse_candidates(self):
+        self.candidates = {}
+        text = self.candidates_text.get("1.0", tk.END).strip()
+        for line in text.split('\n'):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                cid, level = line.split(':')
+                self.candidates[int(cid)] = int(level)
+            except ValueError:
+                messagebox.showerror("Ошибка", f"Неправильный формат строки: {line}")
+                return False
+        return True
+    def team_score(self, team):
+        mids, juns = team
+        return sum(self.candidates[m] for m in mids) + sum(self.candidates[j] for j in juns)
+    def get_possible_roles(self):
+        # Кандидаты, которые могут быть мидлами (уровень ≥ 6)
+        possible_mids = [cid for cid, lvl in self.candidates.items() if lvl >= 6]
+        # Кандидаты, которые могут быть джунами (уровень ≥ 4)
+        possible_juns = [cid for cid, lvl in self.candidates.items() if lvl >= 4]
+        return possible_mids, possible_juns
+    def optimize_team(self):
+        if not self.parse_candidates():
+            return
+        min_mid = self.min_mid_avg.get()
+        min_jun = self.min_jun_avg.get()
+        possible_mids, possible_juns = self.get_possible_roles()
+        results = []
+        # Очищаем поле вывода
+        self.output_area.delete('1.0', tk.END)
+        # Перебираем возможных мидлов
+        for mids in itertools.combinations(possible_mids, 2):
+            mid_avg = sum(self.candidates[m] for m in mids) / 2
+            if mid_avg < min_mid:
+                continue
+            # Оставшиеся кандидаты (кроме выбранных мидлов)
+            remaining = [cid for cid in possible_juns if cid not in mids]
+            # Перебираем возможных джунов
+            for juns in itertools.combinations(remaining, 2):
+                jun_avg = sum(self.candidates[j] for j in juns) / 2
+                if jun_avg >= min_jun:
+                    results.append((mids, juns))
+        if not results:
+            self.output_area.insert(tk.END, "Не найдено подходящих команд с заданными параметрами.")
+            return
+        # Находим оптимальную команду
+        optimal_team = max(results, key=self.team_score)
+        optimal_score = self.team_score(optimal_team)
+        # Выводим результаты
+        self.output_area.insert(tk.END, "=== Оптимальная команда ===\n")
+        self.output_area.insert(tk.END,
+                                f"Мидлы: {optimal_team[0]} (уровни: {[self.candidates[m] for m in optimal_team[0]]}, " +
+                                f"средний: {sum(self.candidates[m] for m in optimal_team[0]) / 2:.1f})\n")
+        self.output_area.insert(tk.END,
+                                f"Джуны: {optimal_team[1]} (уровни: {[self.candidates[j] for j in optimal_team[1]]}, " +
+                                f"средний: {sum(self.candidates[j] for j in optimal_team[1]) / 2:.1f})\n")
+        self.output_area.insert(tk.END, f"Общий уровень команды: {optimal_score}\n")
+        self.output_area.insert(tk.END, f"Средний уровень: {optimal_score / 4:.2f}\n\n")
+        self.output_area.insert(tk.END, f"=== Все подходящие варианты ({len(results)}) ===\n")
+        for idx, (mids, juns) in enumerate(results, 1):
+            score = self.team_score((mids, juns))
+            self.output_area.insert(tk.END,
+                                    f"{idx}. Мидлы: {mids} (ср. {sum(self.candidates[m] for m in mids) / 2:.1f}), " +
+                                    f"Джуны: {juns} (ср. {sum(self.candidates[j] for j in juns) / 2:.1f}), " +
+                                    f"Общий: {score}\n")
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = TeamOptimizerApp(root)
+    root.mainloop()
