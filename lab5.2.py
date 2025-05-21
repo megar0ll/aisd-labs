@@ -1,56 +1,59 @@
-#Вариант 2. Книжный магазин подает рождественские открытки К видов. Покупателю нужно N открыток. Сформировать все возможные комплекты покупки.
-from itertools import combinations
-#Усложненная программа
-def generate_gift_sets_optimized(N, K):
-    all_gifts = [
-        {"name": "Шарик", "color": "красный"},
-        {"name": "Новый год", "color": "синий"},
-        {"name": "Снегурочка", "color": "голубой"},
-        {"name": "Санта", "color": "красный"},
-        {"name": "Снежинка", "color": "серебряный"},
-        {"name": "Рождество", "color": "белый"}
-    ]
-    # Ограничения: какие открытки нельзя комбинировать
-    restrictions = {
-        "Шарик": ["Снежинка"],
-        "Санта": ["Снегурочка"]
-    }
-    valid_sets = []
-    # Генерируем все комбинации длины N
-    for combo in combinations(all_gifts, N):
-        # Проверяем ограничение по цветам (все цвета должны быть разными)
-        colors = [gift["color"] for gift in combo]
-        if len(set(colors)) != N:
-            continue
-        # Проверяем ограничения по темам
-        valid = True
-        names = [gift["name"] for gift in combo]
-        for name in names:
-            if name in restrictions:
-                for forbidden in restrictions[name]:
-                    if forbidden in names:
-                        valid = False
-                        break
-                if not valid:
-                    break
-        if valid:
-            valid_sets.append([gift["name"] for gift in combo])
-    return valid_sets
-def target_function(gift_sets):
-    if not gift_sets:
-        return 0
-    # Находим набор с максимальным количеством уникальных тем
-    max_unique = max(len(set(gift_set)) for gift_set in gift_sets)
-    optimal_solutions = [gift_set for gift_set in gift_sets if len(set(gift_set)) == max_unique]
-    # Возвращаем количество оптимальных решений
-    return len(optimal_solutions)
-# Для второй части фиксируем параметры
-N = 2
-K = 6
-print("\n2 часть - Усложненная программа:")
-all_gift_sets = generate_gift_sets_optimized(N, K)
-print("Все возможные валидные комбинации:")
-for i, gift_set in enumerate(all_gift_sets, 1):
-    print(f"{i}. {gift_set}")
-optimal_count = target_function(all_gift_sets)
-print(f"\nКоличество оптимальных решений: {optimal_count}")
+import itertools
+import timeit
+# Список кандидатов с их уровнем знаний (от 1 до 10)
+candidates = {1: 8, 2: 10, 3: 7, 4: 6, 5: 9, 6: 4}
+# Ограничения:
+MIN_MID_AVG = 7
+MIN_JUN_AVG = 5
+# Целевая функция: максимизировать общий уровень команды
+def team_score(team):
+    mids, juns = team
+    return sum(candidates[m] for m in mids) + sum(candidates[j] for j in juns)
+#Оптимизация: сначала отфильтруем кандидатов, чтобы сократить перебор
+def get_possible_roles(candidates):
+    # Кандидаты, которые могут быть мидлами (уровень ≥ 6, т.к. даже в паре с 10 дадут среднее ≥7)
+    possible_mids = [cid for cid, lvl in candidates.items() if lvl >= 6]
+    # Кандидаты, которые могут быть джунами (уровень ≥4, т.к. даже в паре с 6 дадут среднее ≥5)
+    possible_juns = [cid for cid, lvl in candidates.items() if lvl >= 4]
+    return possible_mids, possible_juns
+#Оптимизированный перебор с предварительной фильтрацией
+def optimized_search(candidates):
+    possible_mids, possible_juns = get_possible_roles(candidates)
+    results = []
+    # Перебираем только возможных мидлов
+    for mids in itertools.combinations(possible_mids, 2):
+        mid_avg = sum(candidates[m] for m in mids) / 2
+        if mid_avg < MIN_MID_AVG:
+            continue  # Отсеиваем неподходящие пары мидлов
+        # Оставшиеся кандидаты (кроме выбранных мидлов)
+        remaining = [cid for cid in possible_juns if cid not in mids]
+        # Перебираем только возможных джунов
+        for juns in itertools.combinations(remaining, 2):
+            jun_avg = sum(candidates[j] for j in juns) / 2
+            if jun_avg >= MIN_JUN_AVG:
+                results.append((mids, juns))
+    return results
+# Замер времени
+start_time = timeit.default_timer()
+opt_result = optimized_search(candidates)
+opt_time = timeit.default_timer() - start_time
+# Находим оптимальную команду
+if opt_result:
+    optimal_team = max(opt_result, key=team_score)
+    optimal_score = team_score(optimal_team)
+# Вывод результатов
+print(" Оптимизированный подход (с предварительной фильтрацией кандидатов)")
+print(f"Найдено вариантов: {len(opt_result)}")
+print(f"Время выполнения: {opt_time:.6f} сек\n")
+print(" Оптимальная команда:")
+print(
+    f"Мидлы: {optimal_team[0]} (уровни: {[candidates[m] for m in optimal_team[0]]}, средний: {sum(candidates[m] for m in optimal_team[0]) / 2:.1f})")
+print(
+    f"Джуны: {optimal_team[1]} (уровни: {[candidates[j] for j in optimal_team[1]]}, средний: {sum(candidates[j] for j in optimal_team[1]) / 2:.1f})")
+print(f"Общий уровень команды: {optimal_score}")
+print(f"Средний уровень: {optimal_score / 4:.2f}\n")
+print(" Все подходящие варианты:")
+for idx, (mids, juns) in enumerate(opt_result, 1):
+    score = team_score((mids, juns))
+    print(
+        f"{idx}. Мидлы: {mids} (ср. {sum(candidates[m] for m in mids) / 2:.1f}), Джуны: {juns} (ср. {sum(candidates[j] for j in juns) / 2:.1f}), Общий: {score}")
