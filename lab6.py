@@ -1,55 +1,77 @@
+import numpy as np
 import timeit
 import matplotlib.pyplot as plt
-def recurs(n):
-    def F(n):
-        if n==1:
-            return 1
-        elif n>=2:
-            return (-1)**n*(F(n-1)+G(n-1))
-        else:
-            return 0
-    def G(n):
-        if n==1:
-            return 1
-        elif n>=2:
-            return F(n-1) + 2*G(n-1)
-        else:
-            return 0
-    return F(n), G(n)
-def iterat(n):
-    if n==1:
-        return 1
-    Fi,Gi=[1]*2,[1]*2
+def F(n):
+    if n < 1:
+        raise ValueError("n должно быть положительным")
+    if n == 1:
+        return -1
+    return (F(n - 1) + G(n - 1))
+def G(n):
+    if n < 1:
+        raise ValueError("n должно быть положительным")
+    if n == 1:
+        return -1
+    return F(n - 1) + (2*G(n - 1))
+def iterative(n):
+    if n < 1:
+        raise ValueError("n должно быть положительным целым числом")
+    if n == 1:
+        return (1, 1)
+    F_prev, G_prev = 1, 1
+    sign = 1  # Начинаем с n=2, (-1)^2 = 1
     for i in range(2, n + 1):
-        f=(-1)**i*(Fi[i-1]+Gi[i-1])
-        g=Fi[i-1] + 2*Gi[i-1]
-        Fi.append(f),Gi.append(g)
-    return Fi[i],Gi[i]
-for n in range(2, 11):
-    Fi, Gi = [0] * (n + 1), [0] * (n + 1)
-    print(f"n = {n}")
-    result_rec = recurs(n)
-    result_iter = iterat(n)
-    print(f"Рекурсивное значение: {result_rec}")
-    print(f"Итеративное значение: {result_iter}")
-n_values = list(range(2, 25))
-rec_times = []
-iter_times = []
-for n in n_values:
-    time_rec = timeit.timeit(lambda: recurs(n), number=1)
-    rec_times.append(time_rec)
-    time_iter = timeit.timeit(lambda: iterat(n), number=1)
-    iter_times.append(time_iter)
-print("n\t| Рекурсивное время (сек)\t| Итеративное время (сек)")
-print("-" * 50)
-for i in range(len(n_values)):
-    print(f"{n_values[i]}\t| {rec_times[i]:.6f}\t\t\t| {iter_times[i]:.6f}")
-plt.figure(figsize=(12, 6))
-plt.plot(n_values, rec_times, label='Рекурсивное время (сек)', marker='o')
-plt.plot(n_values, iter_times, label='Итеративное время (сек)', marker='x')
-plt.xlabel('n')
-plt.ylabel('Время (сек)')
-plt.title('Сравнение времени выполнения рекурсивной и итеративной функций')
-plt.legend()
-plt.grid(True)
-plt.show()
+        sign *= -1
+        F_current = sign * (F_prev + G_prev)
+        G_current = F_prev + 2 * G_prev
+        F_prev, G_prev = F_current, G_current
+    return (F_prev, G_prev)
+def measure_time(func, n, number=1):
+    from functools import partial
+    test_func = partial(func, n)
+    t = timeit.timeit(test_func, number=number)
+    return t / number
+def main():
+    ns = np.arange(1, 21)
+    f_recursive_times = []
+    g_recursive_times = []
+    f_iterative_times = []
+    g_iterative_times = []
+    max_n_recursive = 0
+    for n in ns:
+        try:
+            t = measure_time(F, n)
+            f_recursive_times.append(t)
+            t = measure_time(G, n)
+            g_recursive_times.append(t)
+            max_n_recursive = n
+        except (RecursionError, OverflowError, ValueError) as e:
+            f_recursive_times.append(np.nan)
+            g_recursive_times.append(np.nan)
+        # Для итеративного метода
+        t = measure_time(lambda x: iterative(x)[0], n)
+        f_iterative_times.append(t)
+        t = measure_time(lambda x: iterative(x)[1], n)
+        g_iterative_times.append(t)
+    print("\n n | F_rec_time | G_rec_time | F_iter_time | G_iter_time")
+    for i in range(len(ns)):
+        print(
+            f"{ns[i]:2d} | {f_recursive_times[i]:10.6f} | {g_recursive_times[i]:10.6f} | {f_iterative_times[i]:11.6f} | {g_iterative_times[i]:11.6f}")
+    # Строим графики только для тех n, где рекурсивные методы работали
+    valid_ns = ns[:max_n_recursive]
+    valid_f_rec = f_recursive_times[:max_n_recursive]
+    valid_g_rec = g_recursive_times[:max_n_recursive]
+    plt.figure(figsize=(12, 6))
+    plt.plot(valid_ns, valid_f_rec, 'r--', label='F rec')
+    plt.plot(valid_ns, valid_g_rec, 'b--', label='G rec')
+    plt.plot(ns, f_iterative_times, 'r-', label='F iter')
+    plt.plot(ns, g_iterative_times, 'b-', label='G iter')
+    plt.xlabel('n')
+    plt.ylabel('Time (seconds)')
+    plt.title('Сравнение времени выполнения для рекуррентных формул')
+    plt.legend()
+    plt.grid(True)
+    plt.yscale('log')
+    plt.show()
+if __name__ == "__main__":
+    main()
