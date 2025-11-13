@@ -9,6 +9,7 @@ class TicTacToe:
         self.window.resizable(False, False)
         self.board_size = 3
         self.cell_size = 100
+        self.computer_starts = True
         self.current_player = "O"
         self.game_over = False
         self.board = [["" for _ in range(self.board_size)] for _ in range(self.board_size)]
@@ -43,23 +44,20 @@ class TicTacToe:
         self.status_label.pack()
         self.canvas.bind("<Button-1>", self.click_handler)
         self.draw_board()
-        self.window.after(500, self.first_computer_move)
-
-    def first_computer_move(self):
-        if self.current_player == "O":
-            self.computer_move()
+        if self.computer_starts:
+            self.window.after(500, self.computer_move)
 
     def switch_first_move(self):
-        self.new_game()
-        if self.current_player == "X":
+        self.computer_starts = not self.computer_starts
+        if self.computer_starts:
+            self.switch_first_move_button.config(text="Игрок ходит первым")
             self.current_player = "O"
             self.status_label.config(text="Ход: Компьютер (O)")
-            self.switch_first_move_button.config(text="Игрок ходит первым")
-            self.window.after(500, self.first_computer_move)
         else:
+            self.switch_first_move_button.config(text="Компьютер ходит первым")
             self.current_player = "X"
             self.status_label.config(text="Ход: Игрок (X)")
-            self.switch_first_move_button.config(text="Компьютер ходит первым")
+        self.new_game()
 
     def draw_board(self):
         self.canvas.delete("all")
@@ -78,7 +76,6 @@ class TicTacToe:
             for col in range(self.board_size):
                 x = col * self.cell_size
                 y = row * self.cell_size
-
                 if self.board[row][col] == "X":
                     self.draw_x(x, y)
                 elif self.board[row][col] == "O":
@@ -113,8 +110,6 @@ class TicTacToe:
         if 0 <= row < self.board_size and 0 <= col < self.board_size:
             if self.board[row][col] == "":
                 self.make_move(row, col)
-                if not self.game_over:
-                    self.window.after(500, self.computer_move)
 
     def make_move(self, row, col):
         self.board[row][col] = self.current_player
@@ -131,6 +126,8 @@ class TicTacToe:
         else:
             self.current_player = "O" if self.current_player == "X" else "X"
             self.update_status()
+            if self.current_player == "O" and not self.game_over:
+                self.window.after(500, self.computer_move)
 
     def computer_move(self):
         if self.game_over:
@@ -165,23 +162,23 @@ class TicTacToe:
 
     def find_winning_move(self, player):
         for row in range(self.board_size):
-            if self.board[row].count(player) == 2:
+            if self.board[row].count(player) == 2 and "" in self.board[row]:
                 for col in range(self.board_size):
                     if self.board[row][col] == "":
                         return (row, col)
         for col in range(self.board_size):
             column = [self.board[row][col] for row in range(self.board_size)]
-            if column.count(player) == 2:
+            if column.count(player) == 2 and "" in column:
                 for row in range(self.board_size):
                     if self.board[row][col] == "":
                         return (row, col)
         main_diag = [self.board[i][i] for i in range(self.board_size)]
-        if main_diag.count(player) == 2:
+        if main_diag.count(player) == 2 and "" in main_diag:
             for i in range(self.board_size):
                 if self.board[i][i] == "":
                     return (i, i)
         anti_diag = [self.board[i][self.board_size - 1 - i] for i in range(self.board_size)]
-        if anti_diag.count(player) == 2:
+        if anti_diag.count(player) == 2 and "" in anti_diag:
             for i in range(self.board_size):
                 if self.board[i][self.board_size - 1 - i] == "":
                     return (i, self.board_size - 1 - i)
@@ -214,15 +211,22 @@ class TicTacToe:
             self.status_label.config(text="Ход: Компьютер (O)")
 
     def new_game(self):
-        if self.current_player == "O":
-            self.window.after(500, self.first_computer_move)
         self.board = [["" for _ in range(self.board_size)] for _ in range(self.board_size)]
         self.game_over = False
+        if self.computer_starts:
+            self.current_player = "O"
+            self.status_label.config(text="Ход: Компьютер (O)")
+        else:
+            self.current_player = "X"
+            self.status_label.config(text="Ход: Игрок (X)")
+
         self.draw_board()
-        self.update_status()
+        if self.computer_starts and not self.game_over:
+            self.window.after(500, self.computer_move)
 
     def run(self):
         self.window.mainloop()
+
 if __name__ == "__main__":
     game = TicTacToe()
     game.run()
