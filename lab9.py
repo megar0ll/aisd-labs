@@ -8,7 +8,7 @@ class TicTacToe:
         self.window.title("Крестики-нолики")
         self.window.resizable(False, False)
         self.board_size = 3
-        self.cell_size = 100
+        self.cell_size = 200
         self.current_player = "X"  # X всегда начинает
         self.game_over = False
         self.board = [["" for _ in range(self.board_size)] for _ in range(self.board_size)]
