@@ -8,8 +8,8 @@ class TicTacToe:
         self.window.title("Крестики-нолики")
         self.window.resizable(False, False)
         self.board_size = 3
-        self.cell_size = 200
-        self.current_player = "X"  # X всегда начинает
+        self.cell_size = 100
+        self.current_player = "O"
         self.game_over = False
         self.board = [["" for _ in range(self.board_size)] for _ in range(self.board_size)]
         self.canvas = tk.Canvas(
@@ -19,21 +19,47 @@ class TicTacToe:
             bg="white"
         )
         self.canvas.pack()
+        self.button_frame = tk.Frame(self.window)
+        self.button_frame.pack(pady=10)
         self.new_game_button = tk.Button(
-            self.window,
+            self.button_frame,
             text="Новая игра",
             command=self.new_game,
             font=("Arial", 12)
         )
-        self.new_game_button.pack(pady=10)
+        self.new_game_button.pack(side=tk.LEFT, padx=5)
+        self.switch_first_move_button = tk.Button(
+            self.button_frame,
+            text="Игрок ходит первым",
+            command=self.switch_first_move,
+            font=("Arial", 12)
+        )
+        self.switch_first_move_button.pack(side=tk.LEFT, padx=5)
         self.status_label = tk.Label(
             self.window,
-            text="Ход: Игрок (X)",
+            text="Ход: Компьютер (O)",
             font=("Arial", 12)
         )
         self.status_label.pack()
         self.canvas.bind("<Button-1>", self.click_handler)
         self.draw_board()
+        self.window.after(500, self.first_computer_move)
+
+    def first_computer_move(self):
+        if self.current_player == "O":
+            self.computer_move()
+
+    def switch_first_move(self):
+        self.new_game()
+        if self.current_player == "X":
+            self.current_player = "O"
+            self.status_label.config(text="Ход: Компьютер (O)")
+            self.switch_first_move_button.config(text="Игрок ходит первым")
+            self.window.after(500, self.first_computer_move)
+        else:
+            self.current_player = "X"
+            self.status_label.config(text="Ход: Игрок (X)")
+            self.switch_first_move_button.config(text="Компьютер ходит первым")
 
     def draw_board(self):
         self.canvas.delete("all")
@@ -52,6 +78,7 @@ class TicTacToe:
             for col in range(self.board_size):
                 x = col * self.cell_size
                 y = row * self.cell_size
+
                 if self.board[row][col] == "X":
                     self.draw_x(x, y)
                 elif self.board[row][col] == "O":
@@ -86,9 +113,7 @@ class TicTacToe:
         if 0 <= row < self.board_size and 0 <= col < self.board_size:
             if self.board[row][col] == "":
                 self.make_move(row, col)
-
                 if not self.game_over:
-                    # Ход компьютера
                     self.window.after(500, self.computer_move)
 
     def make_move(self, row, col):
@@ -123,6 +148,12 @@ class TicTacToe:
         if self.board[1][1] == "":
             self.make_move(1, 1)
             return
+        corners = [(0, 0), (0, 2), (2, 0), (2, 2)]
+        random.shuffle(corners)
+        for row, col in corners:
+            if self.board[row][col] == "":
+                self.make_move(row, col)
+                return
         empty_cells = []
         for row in range(self.board_size):
             for col in range(self.board_size):
@@ -167,8 +198,8 @@ class TicTacToe:
             return True
         if all(self.board[i][self.board_size - 1 - i] == player for i in range(self.board_size)):
             return True
-
         return False
+
     def check_draw(self):
         for row in range(self.board_size):
             for col in range(self.board_size):
@@ -181,12 +212,15 @@ class TicTacToe:
             self.status_label.config(text="Ход: Игрок (X)")
         else:
             self.status_label.config(text="Ход: Компьютер (O)")
+
     def new_game(self):
+        if self.current_player == "O":
+            self.window.after(500, self.first_computer_move)
         self.board = [["" for _ in range(self.board_size)] for _ in range(self.board_size)]
-        self.current_player = "X"
         self.game_over = False
         self.draw_board()
         self.update_status()
+
     def run(self):
         self.window.mainloop()
 if __name__ == "__main__":
